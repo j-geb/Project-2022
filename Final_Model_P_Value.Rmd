@@ -1,0 +1,60 @@
+---
+title: "Initial Assumption Checking"
+output:
+  html_document:
+    code_folding: hide
+    toc: true
+    toc_float: true
+    number_sections: true
+date: "2023-10-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data Cleaning
+
+```{r message=FALSE}
+# Import the required packages.
+library(readxl)
+library(tidyverse)
+library(broom)
+library(cowplot)
+```
+
+```{r}
+concrete = read_excel("Concrete_Data.xls")
+
+# rename the variables
+# store old names
+old_names = colnames(concrete)
+
+# create new names on the order of the old names
+new_names = c("cement", "furnace_slag", "fly_ash", "water", "superplasticizer",
+              "coarse_agg", "fine_agg", "age", "concrete_strength")
+
+# overwrite old names with new names
+colnames(concrete) = new_names
+```
+
+# Post Model-Selection Slope-Significance Test
+
+## Introduction
+
+After the performance assessment, we found that the model created by backward stepwise scheme and exhaustive search scheme perform better than the model created by forward stepwise scheme. Hence, the model created by backward stepwise scheme is our selected model. 
+
+We are going to perform Slope-significance test on the selected model to see whether each of the variables in the model has significance enough slope to have linear relationship with the dependent variable to fulfil the linear relationship assumption of linear regression model.
+
+## Test
+
+```{r}
+data = subset(concrete, select = -c(water))
+M1 = lm(data$concrete_strength ~ ., data = data)
+M1 |> broom::tidy()
+```
+
+## Conclusion
+
+All the variables in the model have small p-value. Hence, there is strong evidence that suggest all the variables have linear relationship with the dependent variable.
+

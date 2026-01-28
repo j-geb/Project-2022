@@ -1,0 +1,176 @@
+---
+title: "CROSS VALIDATION"
+output: 
+  html_document:
+    code_folding: hide
+---
+
+```{r, echo = FALSE, message = FALSE, results = FALSE, warning = FALSE}
+library(readxl)
+library(tidyverse)
+library(broom)
+library(sjPlot)
+library(ggplot2)
+library(ggstatsplot)
+library(jtools)
+library(ggstance)
+library(car)
+library(coefplot)
+library(cowplot)
+library(ggfortify)
+library(visdat)
+library(gt)
+library(effects)
+library(dplyr)
+library(gridExtra)
+
+
+concrete = read_excel("~/Documents/DATA2002/Assignment/group project/Concrete_Data.xls")
+new_names = c("cement", "furnace_slag", "fly_ash", "water", "superplasticizer",
+              "coarse_agg", "fine_agg", "age", "concrete_strength")
+colnames(concrete) = new_names
+```
+
+
+```{r, echo = FALSE,  message = FALSE, results = FALSE, warning = FALSE}
+library(leaps) 
+exh = regsubsets(concrete_strength ~.-water, data = concrete, nvmax = 8) 
+exhs = summary(exh)
+exhs$outmat
+```
+
+
+```{r, echo = FALSE,  message = FALSE, results = FALSE, warning = FALSE}
+# Backwards Step Model
+M1 = lm(concrete$concrete_strength ~ ., data = concrete)
+
+step.back.aic = step(M1,direction = "backward", trace = FALSE)
+round(summary(step.back.aic)$coef,3)
+step.back.aic |>
+  broom::glance() |>
+  round(2) |> t()
+
+# Forward Stepwise Model
+
+M0 = lm(concrete$concrete_strength ~ 1, data = concrete)
+step.fwd.aic = step(M0, scope = list(lower = M0, upper = M1),
+                    direction = "forward", trace = FALSE)
+summary(step.fwd.aic)
+
+sjPlot::tab_model(step.fwd.aic, step.back.aic, show.ci = FALSE, show.aic = TRUE,
+                  dv.labels = c("Forward model", "Backward model"))
+```
+
+```{r, echo = FALSE,  message = FALSE, results = FALSE, warning = FALSE}
+#exhaustive model
+exh = regsubsets(concrete_strength ~.-water, data = concrete, nvmax = 8) 
+exhs = summary(exh)
+exhs$outmat
+```
+
+
+```{r, , echo = FALSE,  message = FALSE, results = FALSE, warning = FALSE}
+cv_simple = train(
+  concrete_strength ~ cement, data = concrete,
+                method = "lm",
+                trControl = trainControl(
+                  method = "cv", number = 10,
+                  verboseIter = FALSE
+                )
+  
+)
+cv_simple
+```
+
+```{r, echo = FALSE,  message = FALSE, results = FALSE, warning = FALSE}
+cv_exhaustive = train(
+  concrete_strength ~.-water, data = concrete,
+                method = "lm",
+                trControl = trainControl(
+                  method = "cv", number = 10,
+                  verboseIter = FALSE
+                )
+  
+)
+cv_exhaustive
+```
+
+```{r, message = FALSE, results = FALSE, warning = FALSE} 
+cv_backwards = train(
+  concrete_strength ~. -water, data = concrete,
+                method = "lm",
+                trControl = trainControl(
+                  method = "cv", number = 10,
+                  verboseIter = FALSE
+                )
+)
+cv_backwards
+```
+
+```{r, echo = FALSE,  message = FALSE, results = FALSE, warning = FALSE}
+#forwards model
+cv_forwards = train(
+  concrete_strength ~. -coarse_agg -fine_agg -water, data = concrete,
+                method = "lm",
+                trControl = trainControl(
+                  method = "cv", number = 10,
+                  verboseIter = FALSE
+                )
+)
+  
+cv_forwards  
+```
+
+```{r, message = FALSE, results = FALSE, warning = FALSE}
+#linear model using best predictor
+cv_simple = train(
+  concrete_strength ~ cement, data = concrete,
+                method = "lm",
+                trControl = trainControl(
+                  method = "cv", number = 10,
+                  verboseIter = FALSE
+                )
+)
+  
+cv_simple  
+```
+# Results
+forwards/backwards/exhaustive all create the same model. however a comparison between a simple linear regression with the best predictor (cement) and the full model shows the latter performs better
+
+```{r}
+
+data <- data.frame(
+  Metric = c("RMSE", "MAE", "Rsquared"),
+  Simple = c(14.49979, 11.86952, 0.2538355),
+  Full = c(10.4916, 8.246248, 0.6111981)
+)
+
+table <- gt(data) %>%
+  tab_options(
+    table.width = px(600),
+  ) %>%
+  fmt_number(
+    columns = c(Simple, Full),
+    decimals = 2
+  )
+  
+table
+
+results = resamples(list(back = cv_backwards, simple = cv_simple))
+ggplot(results, metric = "MAE") +
+  labs(y = "MAE")
+
+
+ggplot(results, metric = "RMSE") + 
+  labs(y = "RMSE")
+
+
+ggplot(results, metric = "Rsquared") + 
+  labs(y = "Rsquared")
+
+
+```
+
+
+
+

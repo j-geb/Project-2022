@@ -1,0 +1,33 @@
+---
+title: "Untitled"
+author: "Congying Yang"
+date: "2023-11-02"
+output: doc_document
+---
+
+Then we need to check the assumption of our final model.
+
+Now we need to plot the Residual vs Fitted and Normal plot:
+```{r}
+library(ggfortify)
+library(ggplot2)
+library(tidyverse)
+library(readxl)
+concrete <- read_excel("/Users/annayang/Downloads/data-group/Concrete_Data.xls")
+new_names = c("cement", "furnace_slag", "fly_ash", "water", "superplasticizer",
+              "coarse_agg", "fine_agg", "age", "concrete_strength")
+colnames(concrete) = new_names
+lm1 = lm(concrete_strength ~ cement + superplasticizer + furnace_slag + fly_ash + coarse_agg + fine_agg, concrete)
+autoplot(lm1, which = 1:2) + theme_bw()
+```
+Then we can analyse our final model with the linearity, normality and homoscedasticity.
+
+For the linearity, we can see clearly the blue line with little curve in residual vs fitted plot. Through our careful obversation for reisidual vs fitted plot, we can find that there're several scattered data with very low level, which are in interval 60 - 70 fitted values, and we also see some dense data below the line 0, which are around 20 fitted values. Futhermore, we consider that the slightly curve is caused by these special data below zero, and the number of these data in low level is much smaller than the amount of overall data set. So we decide to ignore this slightly curve and conclude that there's linear relationship in this model due to the distributed symmetrically above and below zero in residual plot.
+
+About normality, we can see that there's a relatively straight line with symmetrically distribution in the normal QQ plot. And this line fits the dotted line very well. Then we can conclude that the QQ plot shows a straight line which indicates that the normality assumption is reasonable.
+
+Lastly let's discuss on the homoscedasticity of our final model. In the general view to obverse the residual vs fitted plot, we cannot see the obvious trend in residual plot with the distribution symmetrically. Hence, we can get the conclusion that the residual vs fitted plot shows the variance is consistent which indicates that this model is homoscedasticity and the assumption of homogeneous variance is valid.
+
+(Note: the gap of residual vs fitted plot is caused by deleted "age" variable and our orginal data set which include a lot same numbers in same variable and some gaps in same variable. About the problem with data being discrete, we will discuss about the last part of limination.)
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

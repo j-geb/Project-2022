@@ -1,0 +1,90 @@
+---
+title: "Untitled1"
+author: "Congying Yang"
+date: "2023-10-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+install.packages("GGally")
+install.packages("ggfortify")
+install.packages("dplyr")
+install.packages("ggplot2")
+install.packages("visdat")
+```
+
+
+```{r}
+library(readxl)
+Concrete_Data <- read_excel("~/Downloads/concrete+compressive+strength/Concrete_Data.xls")
+
+```
+Exploratory data analysis
+
+Data set: Concrete strength
+Dependent variable: concrete compressive strength
+#Clean the data
+```{r}
+new_names = c("Cement","Blast_Furnace_Slag","Fly_Ash","Water",
+              "Superplasticizer","Coarse_Aggregate","Fine_Aggregate","Age", "Concrete_Compressive_Strength")
+colnames(Concrete_Data) = new_names
+```
+
+```{r}
+visdat::vis_miss(Concrete_Data)
+```
+#summary of all variable
+```{r}
+summary(Concrete_Data$Concrete_Compressive_Strength)
+```
+#Normality of dependent variable
+
+```{r}
+Concrete_Data |> ggplot() +
+  aes(sample = Concrete_Compressive_Strength) +
+  geom_qq(size = 1.5) + geom_qq_line()
+```
+#boxplot in dependent variable
+```{r}
+boxplot(Concrete_Data$Concrete_Compressive_Strength, horizontal = TRUE,
+        xlab = "Mpa, megapascals")
+```
+
+
+#Visualizing Entire Data Set
+```{r}
+library(GGally)
+GGally::ggpairs(Concrete_Data) + theme_bw(base_size = 5)
+```
+
+```{r}
+concrete |> ggplot() +
+aes(sample = concrete_strength) +
+geom_qq(size = 2) + geom_qq_line()
+```
+
+

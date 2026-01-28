@@ -1,0 +1,31 @@
+---
+title: "Residual&normality&homo.Rmd"
+author: "Congying Yang"
+date: "2023-10-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#residual and normality
+```{r}
+library(ggfortify)
+library(ggplot2)
+concrete <- read_excel("~/Downloads/concrete+compressive+strength/Concrete_Data.xls")
+new_names = c("cement", "furnace_slag", "fly_ash", "water", "superplasticizer",
+              "coarse_agg", "fine_agg", "age", "concrete_strength")
+colnames(concrete) = new_names
+lm1 = lm(concrete_strength ~ cement + superplasticizer + age + furnace_slag + fly_ash, concrete)
+autoplot(lm1, which = 1:2) + theme_bw()
+```
+
+
+**Linearity: There's linear relationship in this model due to the unsymemetrically distributed above and below zero in residual plot. 
+
+Homoskedasticity: The residual vs fitted plot shows the varience is  not consistent which indicates that this model is not homoskedasticity and the assumption of homogeneous varience is invalid.
+
+Normality: The QQ plot shows a straight line which indicates that the normality assumption is reasonable without outlier. 
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

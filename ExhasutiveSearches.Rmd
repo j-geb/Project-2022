@@ -1,0 +1,31 @@
+---
+title: "Exhaustive Searches"
+output: html_document
+date: "2023-10-14"
+---
+
+```{r}
+library(readxl)
+concrete = read_excel("Concrete_Data.xls")
+new_names = c("cement", "furnace_slag", "fly_ash", "water", "superplasticizer",
+              "coarse_agg", "fine_agg", "age", "concrete_strength")
+colnames(concrete) = new_names
+```
+
+Given that the total number of possible predictors is 7 (), an exhaustive search of the full set of possible models is viable.
+
+```{r}
+library(leaps) 
+exh = regsubsets(concrete_strength ~.-water, data = concrete, nvmax = 8) 
+exhs = summary(exh)
+exhs$outmat
+```
+From this search, it can be found that cement is the best predictor for concrete compressive strength for a model of size 1. 
+To find the best model, the coefficient of determination (R-Squared) will be plotted against the models of each size.
+
+```{r}
+plot(exh, scale = "r2")
+```
+
+The highest R-Squared value is found in a model of full size (0.61), which agrees with the findings of the Backward variable selection model.
+

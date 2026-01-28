@@ -1,0 +1,159 @@
+---
+title: "Project Presentation Title"
+subtitle: "Group 001A01"
+author: "Person 1, Person 2, Person 3, Person 4 and Person 5"
+format: 
+  revealjs:
+    auto-slide: 20000
+    embed-resources: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Slide title
+
+I am a slide with a **plot**
+
+```{r, echo=FALSE, message=FALSE, fig.height=6, fig.width=10}
+library(ggplot2)
+ggplot(mtcars) +
+  aes(x = mpg) + 
+  geom_histogram() + 
+  theme_classic(base_size = 22)
+```
+
+
+
+
+
+## Slide title {.larger}
+
+I am a slide with a *table*
+
+```{r, message = FALSE, echo = FALSE}
+library(gt)
+library(dplyr)
+mtcars |> group_by(cyl) |> 
+  summarise(mean_mpg = mean(mpg),
+            sd_mpg = sd(mpg),
+            mean_wt = mean(wt),
+            sd_wt = sd(wt)) |> 
+  gt::gt() |>  
+  gt::fmt_number(columns = 2:5, decimals = 1) |> 
+  gt::cols_label(cyl = "Number of cylinders",
+                 mean_mpg = "Mean",
+                 sd_mpg = "SD",
+                 mean_wt = "Mean",
+                 sd_wt = "SD") |> 
+  gt::tab_spanner(columns = ends_with("_mpg"),"Miles per gallon")|> 
+  gt::tab_spanner(columns = ends_with("_wt"),"Weight (1000 lbs)")
+```
+
+
+
+
+## Slide title
+
+I am slide three content with maths
+
+$$E = mc^2$$
+
+
+
+## Slide title
+
+Content
+
+
+
+## Slide title
+
+Content
+
+
+
+## Slide title
+
+Content
+
+
+
+
+## Slide title
+
+Content
+
+
+
+
+## Slide title
+
+Content
+
+
+
+## Slide title
+
+Content
+
+
+
+## Slide title
+
+Content
+
+
+
+## Slide title
+
+Content
+
+
+
+## Slide title
+
+Content
+
+
+
+## Slide title
+
+Content
+
+
+
+## Slide title
+
+Content
+
+
+
+## Slide title
+
+Content
+
+
+
+## Slide title
+
+Content
+
+
+
+## Slide title
+
+Content
+
+
+
+## Slide title
+
+Content
+
+
+
+## Last slide
+
+This is slide 20. You can't have more than 20 slides (including the title slide)!

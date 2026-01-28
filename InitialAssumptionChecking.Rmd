@@ -1,0 +1,209 @@
+---
+title: "Initial Assumption Checking"
+output:
+  html_document:
+    code_folding: hide
+    toc: true
+    toc_float: true
+    number_sections: true
+date: "2023-10-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data Cleaning
+
+Import the required packages.
+```{r message=FALSE}
+library(readxl)
+library(tidyverse)
+library(broom)
+library(cowplot)
+```
+
+Look at the missing values in the data.
+```{r}
+# read the data
+concrete = read_excel("Concrete_Data.xls")
+
+# look for missing data
+# no missing data at all! nice
+visdat::vis_miss(concrete) + coord_flip() + theme(legend.position = "none")
+```
+
+Rename the variables into a more code-friendly form.
+```{r}
+# rename the variables
+# store old names
+old_names = colnames(concrete)
+
+# create new names on the order of the old names
+new_names = c("cement", "furnace_slag", "fly_ash", "water", "superplasticizer",
+              "coarse_agg", "fine_agg", "age", "concrete_strength")
+
+# overwrite old names with new names
+colnames(concrete) = new_names
+
+#combine old and new names into a data frame
+name_combo = bind_cols(New=new_names, Old=old_names)
+name_combo |> gt::gt()
+```
+
+# Assumption Checking
+We are going to perform initial assumption checking and determine which variables we can use (or useful) for our model.
+
+## Normality Assumption
+```{r}
+concrete |> ggplot() +
+aes(sample = concrete_strength) +
+geom_qq(size = 2) + geom_qq_line()
+```
+
+### Conclusion
+The points distribution of the dependent variable (concrete strength) roughly follows the normal distribution although the lower tail tends to rise above the line. However, the large number of observations in the data is enough for us to assume that the distribution is normal according to the Central Limit theorem.
+
+
+## Data Type 
+```{r}
+sprintf("Total number of observations: %d", nrow(concrete))
+print("Number of distinct values per variable:")
+for (i in colnames(concrete)){
+  n = length(unique(concrete[[i]]))
+  print(sprintf("%s: %d", i, n))
+}
+```
+### Conclusion
+
+All of the independent variables are numeric. However, age has small number of distinct values, indicating that it is closer to categorical data than discreet data. It is also feasible to use age as categorical data as it only has 14 distinct values, which is around 1.4% of the total observations. The rest of the variables are continuous. Both categorical and continuous variables can be used to build a linear regression model.
+
+
+## Linearity Assumption
+
+```{r}
+p = concrete |> ggplot() +
+  geom_point(size = 3) +
+  theme_classic(base_size = 30) +
+  geom_smooth(method="lm", se=FALSE, colour="black") +
+  geom_smooth(method = "loess", se = FALSE)
+```
+
+### Cement
+
+```{r message=FALSE}
+p + aes(x = cement, y = concrete_strength) + labs(x="Cement", y="Concrete Strength") # cement
+```
+
+### Furnace Slag
+
+```{r message=FALSE}
+p + aes(x = furnace_slag, y = concrete_strength) + labs(x="Furnace Slag", y="Concrete Strength") # furnace slag
+```
+
+### Fly Ash
+
+```{r message=FALSE}
+p + aes(x = fly_ash, y = concrete_strength) + labs(x="Fly Ash", y="Concrete Strength")  # Fly Ash
+```
+
+### Water
+
+```{r message=FALSE}
+p + aes(x = water, y = concrete_strength) + labs(x="Water", y="Concrete Strength") # Water
+```
+
+It can  be seen that water does not have linear relationship with concrete strength. Next, we are going to perform data transformation using log function to try arranging the points to be linear.
+
+Transform x axis with log10:
+
+```{r message=FALSE}
+p + aes(x = water, y = concrete_strength) + labs(x="Water", y="Concrete Strength") + scale_x_log10()
+```
+
+Transform y axis with log10:
+
+```{r message=FALSE}
+p + aes(x = water, y = concrete_strength) + labs(x="Water", y="Concrete Strength") + scale_y_log10()
+```
+
+Transform x and y axis with log10:
+
+```{r message=FALSE}
+p + aes(x = water, y = concrete_strength) + labs(x="Water", y="Concrete Strength") + scale_x_log10() + scale_y_log10()
+```
+
+
+### Superplasticizer
+
+```{r message=FALSE}
+p + aes(x = superplasticizer, y = concrete_strength) + labs(x="Superplasticizer", y="Concrete Strength") # Superplasticizer
+```
+
+### Coarse Aggregate
+
+```{r message=FALSE}
+p + aes(x = coarse_agg, y = concrete_strength) + labs(x="Coarse Aggregate", y="Concrete Strength") # Coarse Aggregate
+```
+
+### Fine Aggregate
+
+
+```{r message=FALSE}
+p + aes(x = fine_agg, y = concrete_strength) + labs(x="Fine Aggregate", y="Concrete Strength") # Fine Aggregate
+```
+
+### Conclusion
+
+Cement and superplasticizer seems to have a very linear relationship with the concrete strength. 
+
+Furnace slag and fly ash also seems to have linear relationship with the concrete strength. Although the points at the right hand side of the plot seems to go below the line, they are only a small part of the observations. 
+
+Coarse and fine aggregates seems to also have a linear relationship. Although the points at the right hand side of the graph tends to go above the line, they are only a small part of the 
+
+Water does not seem to have linear relationship withe concrete strength. Significant number of points on both tail ends seems to spread further away from the linear line. We tried to apply combinations of log transform on the data, but the non-linear trends remains. 
+
+## Testing for Slope Significance
+
+We are going to test if the slope of each of the variables is significant enough to say that the variable has linear relationship with the dependent variable. Build the linear models with model consisted of only one variable as the predictor of concrete strength. Then, extract the p-value of each of the variables from the models.
+
+```{r}
+cement_lm = lm(concrete_strength ~ cement, data=concrete)
+furnace_slag_lm = lm(concrete_strength ~ furnace_slag, data=concrete)
+fly_ash_lm = lm(concrete_strength ~ fly_ash, data=concrete)
+superplasticizer_lm = lm(concrete_strength ~ superplasticizer, data=concrete)
+coarse_agg_lm = lm(concrete_strength ~ coarse_agg, data=concrete)
+fine_agg_lm = lm(concrete_strength ~ fine_agg, data=concrete)
+
+cement_p = cement_lm |> broom::tidy() |> select(p.value) |> slice(2) |> pull()
+furnace_slag_p = furnace_slag_lm |> broom::tidy() |> select(p.value) |> slice(2) |> pull()
+fly_ash_p = fly_ash_lm |> broom::tidy() |> select(p.value) |> slice(2) |> pull()
+superplasticizer_p = superplasticizer_lm |> broom::tidy() |> select(p.value) |> slice(2) |> pull()
+coarse_agg_p = coarse_agg_lm |> broom::tidy() |> select(p.value) |> slice(2) |> pull()
+fine_agg_p = fine_agg_lm |> broom::tidy() |> select(p.value) |> slice(2) |> pull()
+
+names = c("Cement", "Furnace Slag", "Fly Ash", "Superplasticizer", "Coarse Aggregate", "Fine Aggregate")
+p_values = c(cement_p, furnace_slag_p, fly_ash_p, superplasticizer_p, coarse_agg_p, fine_agg_p)
+
+for (i in 1:length(names)) {
+  print(sprintf("p value of %s: %f", names[i], p_values[i]))
+}
+```
+
+### Conclusion
+
+There is a strong evidence in the data to indicate a linear relationship between each independent variables (except water) and the concrete strength. We do not test the linear relationship of water in this analysis, because in the linearity check of the previous section, water can be seen at a glance to have no linear relationship with concrete strength. 
+
+Additionally, it is recommended to check the p-value/perform the test again after the linear regression model(s) is found. This is because this analysis is only performed to each of the variables independently without taking account the other variables. In other words, the p-value of each of the variables may change according to the combination of the variables they are being tested with.
+
+However, this tests is enough to see that each of the variables except for water can be used as the candidate variables for our linear regression model. 
+
+# Summary
+
+The dependent variable of the data (concrete strength) fulfill the normality assumption.
+
+All of the variables, except water, fulfill the linearity assumption checking and there is a strong evidence to indicate their linear relationship to the concrete strength. 
+
+Note that age variable is discrete, however it can be used as the candidate predictor as categorical variable because it only has a small number of distinct values (14).
+
+Additional note: It is recommended to perform the significance of the slope test again after the model is found because the p-value of the variables may change.
